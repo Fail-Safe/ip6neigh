@@ -465,8 +465,8 @@ whois_this_iface() {
 #Download OUI database
 oui_download() {
 	echo "Downloading Nmap MAC prefixes..."
-	oui_url='https://web.stanford.edu/dept/its/projects/desktop/snsr/nmap-mac-prefixes' #'https://linuxnet.ca/ieee/oui/nmap-mac-prefixes'
-        curl -# -S -f -k -o '/tmp/oui-raw.txt' $oui_url || exit 2
+	oui_url='https://standards-oui.ieee.org/oui/oui.txt'
+    curl -# -S -f -k -o '/tmp/oui-raw.txt' $oui_url || exit 2
 
 	echo -e "\nApplying filters..."
 
