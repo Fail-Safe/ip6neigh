@@ -47,14 +47,14 @@ for i in "$@" ; do
 			shift
 			;;
 		*)
-	                echo "ip6neigh Service Script v${SVC_VERSION}"
-	                echo -e
-	                echo "This script is intended to be run only by its init script."
-	                echo "If you want to start ip6neigh, type:"
-	                echo -e
-        	        echo "ip6neigh start"
-	                echo -e
-	                exit 1
+					echo "ip6neigh Service Script v${SVC_VERSION}"
+					echo -e
+					echo "This script is intended to be run only by its init script."
+					echo "If you want to start ip6neigh, type:"
+					echo -e
+					echo "ip6neigh start"
+					echo -e
+					exit 1
 			;;
 	esac
 done
@@ -143,23 +143,23 @@ if [ -z "$DOMAIN" ]; then DOMAIN="lan"; fi
 reload_hosts() {
 	#Check the pending flag
 	[ "$reload_pending" = 1 ] || return 0
-	
+
 	local now
 	local diff
-	
+
 	#Current time
 	now=$(date +%s)
 
 	#Difference from the last reload time in seconds
 	diff=$(($now - $reload_time))
-	
+
 	#Reloads if the difference is more than 5 seconds with reload pending
 	if [ "$diff" -ge 5 ]; then
 		reload_time="$now"
 		reload_pending=0
 		killall -1 dnsmasq
 	fi
-	
+
 	return 0
 }
 
@@ -192,7 +192,7 @@ add_cache() {
 	local mac="$1"
 	local name="$2"
 	local type="$3"
-	
+
 	#Write the name to the cache file.
 	logmsg "Creating type $type cache entry for $mac: ${name}"
 	echo "${mac} ${type} ${name}" >> "$CACHE_FILE"
@@ -220,7 +220,7 @@ rename() {
 	#Must save changes to another temp file and then move it over the main file.
 	sed "s/ ${oldname}/ ${newname}/g" "$HOSTS_FILE" > "$TEMP_FILE"
 	mv "$TEMP_FILE" "$HOSTS_FILE"
-	
+
 	#Deletes the old cached entry if dynamic.
 	grep -v "0. ${oldname}$" "$CACHE_FILE" > "$TEMP_FILE"
 	mv "$TEMP_FILE" "$CACHE_FILE"
@@ -234,21 +234,21 @@ rename() {
 remove_tmp_label() {
 	local addr="$1"
 	local name="$name"
-	
+
 	#Gets the interface identifier from the address
 	local iid=$(addr_iid64 "$addr")
-	
+
 	#IID match string
 	local im=$(gen_iid_match "$iid")
-	
+
 	#Get the list of addresses with the same IID from the same host
 	local match="^${im} ${name}\\${tmp_label}(\.|$)"
 	local list
 	list=$(grep -E "$match" "$HOSTS_FILE")
-	
+
 	#Return if nothing was found
 	[ "$?" = 0 ] || return 0
-	
+
 	#Create temp file without the matched lines
 	grep -v -E "$match" "$HOSTS_FILE" > "$TEMP_FILE"
 
@@ -257,7 +257,7 @@ remove_tmp_label() {
 		sed -e "s/${tmp_label}.${DOMAIN}//g" \
 			-e "s/${tmp_label}//g" \
 		>> "$TEMP_FILE"
-	
+
 	#Move the temp file over the main file
 	mv "$TEMP_FILE" "$HOSTS_FILE"
 
@@ -270,7 +270,7 @@ remove_tmp_label() {
 logmsg() {
 	#Check if logging is disabled
 	[ "$LOG" = "0" ] && return 0
-	
+
 	if [ "$LOG" = "1" ]; then
 		#Log to syslog
 		logger -t ip6neigh "[$LAN_DEV] $1"
@@ -278,24 +278,24 @@ logmsg() {
 		#Log to file
 		echo "$(date) [$LAN_DEV] $1" >> "$LOG"
 	fi
-	
+
 	#If -e argument was present, echo to stdout.
 	[ "$ECHO" = 1 ] && echo "$1"
-	
+
 	return 0
 }
 
 #Tries to guess if the supplied IPv6 address is non-temporary.
 is_other_static() {
 	local addr="$1"
-	
+
 	#Gets the interface identifier from the address
 	local iid=$(addr_iid64 "$addr")
-	
+
 	#Looks for a link-local address with the same IID and returns true if it finds one.
 	local lladdr=$(compress_addr "fe80:0:0:0:${iid}")
 	grep -q "^$lladdr " "$HOSTS_FILE" && return 0
-	
+
 	#Otherwise returns false
 	return 1
 }
@@ -304,13 +304,13 @@ is_other_static() {
 add_probe() {
 	#Compress the address
 	local addr=$(compress_addr "$1")
-	
+
 	#Do not add if the address already exist in some hosts file and unique flag was set on call.
 	[ "$2" -gt 0 ] && grep -q "^$addr[ ,"$'\t'"]" /tmp/hosts/* && return 0
-	
+
 	#Adds to the list
 	probe_list="${probe_list} ${addr}"
-	
+
 	return 0
 }
 
@@ -323,7 +323,7 @@ probe_addresses() {
 
 	#Initializes probe list
 	probe_list=""
-	
+
 	#Check if is configured for probing all the addresses from the same host
 	if [ "$PROBE_HOST" -gt 0 ]; then
 		#Get the address list for this host.
@@ -337,7 +337,7 @@ probe_addresses() {
 		done
 		IFS="$OIFS"
 	fi
-	
+
 	#Check if is configured for probing addresses with the same IID
 	local base_iid=""
 	if [ "$PROBE_IID" -gt 0 ]; then
@@ -369,17 +369,17 @@ probe_addresses() {
 			fi
 		fi
 	fi
-	
 
-	
+
+
 	#Exit if there is nothing to probe.
 	[ -n "$probe_list" ] || return 0
-	
+
 	#Removes leading space from the list
 	probe_list="${probe_list:1}"
-	
+
 	logmsg "Probing other possible addresses for ${name}: ${probe_list}"
-	
+
 	#Ping each address once.
 	local addr
 	local OIFS="$IFS"
@@ -390,7 +390,7 @@ probe_addresses() {
 		fi
 	done
 	IFS="$OIFS"
-	
+
 	#Clears the probe list.
 	probe_list=""
 
@@ -407,7 +407,7 @@ dhcp_name() {
 	if [ "$DHCPV6_NAMES" -gt 0 ]; then
 		match=$(echo "$mac" | tr -d ':')
 		name=$(grep -m 1 -E "^# ${LAN_DEV} (00010001.{8}|00030001)${match} [^ ]* [^-]" /tmp/hosts/odhcpd | cut -d ' ' -f5)
-		
+
 		#Success getting name from DHCPv6.
 		if [ -n "$name" ]; then
 			add_cache "$mac" "$name" '06'
@@ -419,7 +419,7 @@ dhcp_name() {
 	#If couldn't find a match in DHCPv6 leases then look into the DHCPv4 leases file.
 	if [ "$DHCPV4_NAMES" -gt 0 ]; then
 		name=$(grep -m 1 -E " $mac [^ ]{7,15} ([^*])" $LEASE_FILE | cut -d ' ' -f4)
-		
+
 		#Success getting name from DHCPv4.
 		if [ -n "$name" ]; then
 			add_cache "$mac" "$name" '04'
@@ -427,7 +427,7 @@ dhcp_name() {
 			return 0
 		fi
 	fi
-	
+
 	#Failed. Return error.
 	return 1
 }
@@ -442,7 +442,7 @@ is_dhcpv6_addr() {
 		"$wula_man_hint":*) return 0;;
 		"$gua_man_hint":*) return 0;;
 	esac
-	
+
 	return 1
 }
 
@@ -451,21 +451,21 @@ oui_name() {
 	#Get MAC and separates OUI part.
 	local mac="$1"
 	local oui="${mac:0:6}"
-	
+
 	#Check if the MAC is locally administered.
 	if [ "$((0x${oui:0:2} & 0x02))" != 0 ]; then
 		#Returns LocalAdmin as name and success.
 		echo 'LocalAdmin'
 		return 0
 	fi
-	
+
 	#Fails here if OUI file does not exist.
 	[ -f "$OUI_FILE" ] || return 1
 
 	#Searches for the OUI in the database.
 	local reg=$(gunzip -c "$OUI_FILE" | grep -m 1 "^$oui")
 	local name="${reg:6}"
-	
+
 	#Check if found.
 	if [ -n "$name" ]; then
 		#Returns the manufacturer name and success code.
@@ -481,7 +481,7 @@ oui_name() {
 manuf_name() {
 	local mac="$1"
 	local name
-	
+
 	#Get info from the MAC.
 	local upmac=$(echo "$mac" | tr -d ':' | awk '{print toupper($0)}')
 	local nicid="${upmac:9}"
@@ -501,7 +501,7 @@ manuf_name() {
 			logmsg "Too many name conflicts for ${name}. Giving up."
 			return 2
 		fi
-		
+
 		#Generate new name.
 		code=$(printf %x $count)
 		code=$(echo "${mac}${code}" | tr -d ':' | md5sum)
@@ -509,10 +509,10 @@ manuf_name() {
 		true $(( code++ ))
 		logmsg "Name conflict for ${mac}. Trying ${name}"
 	done
-	
+
 	#Writes entry to the cache with type 01.
 	add_cache "$mac" "$name" '01'
- 	
+
 	#Returns the newly created name.
 	echo "$name"
 	return 0
@@ -523,14 +523,14 @@ create_name() {
 	local mac="$1"
 	local acceptmanuf="$2"
 	local name
-	
+
 	#Look for a name in the cache file.
 	local lease
 	lease=$(grep -m 1 "^${mac} " "$CACHE_FILE")
 	if [ "$?" = 0 ]; then
 		#Get type.
 		local type=$(echo "$lease" | cut -d ' ' -f2)
-		
+
 		#Check if the cached entry can be used in this call.
 		if [ "$acceptmanuf" -gt 0 ] || [ "$type" != '01' ]; then
 			#Get name and use it.
@@ -555,7 +555,7 @@ create_name() {
 			return 0
 		fi
 	fi
-	
+
 	#Returns fail
 	return 1
 }
@@ -564,20 +564,20 @@ create_name() {
 get_name() {
 	local addr="$1"
 	local matched
-	
+
 	#Check if the address already exists
 	matched=$(grep -m 1 "^$addr[ ,"$'\t'"]" /tmp/hosts/*)
-	
+
 	#Address is new? (not found)
 	[ "$?" != 0 ] && return 2
-	
+
 	#Check what kind of name it has
 	local fqdn=$(echo "$matched" | tr $'\t' ' ' | cut -d ' ' -f2)
 	local name=$(echo "$fqdn" | cut -d '.' -f1)
-	
+
 	#Outputs the name
 	echo "$name"
-	
+
 	#Manufacturer name?
 	grep -q "01 ${name}$" "$CACHE_FILE" && return 1
 
@@ -590,12 +590,12 @@ process() {
 	local addr
 	local mac="$3"
 	local status
-	
+
 	#Get the address and translate delete events to FAILED.
 	if [ "$1" = 'delete' ]; then
 		addr="$2"
 		status="FAILED"
-	else 
+	else
 		addr="$1"
 		for status; do true; done
 	fi
@@ -615,31 +615,31 @@ process() {
 		"FAILED")
 			#Get the line number that divides the two sections of the hosts file
 			local ln=$(grep -n '^#Discovered' "$HOSTS_FILE" | cut -d ':' -f1)
-			
+
 			#If this is not an address from the "discovered" section, do nothing.
 			awk "NR>${ln}"' {printf "%s\n",$1}' "$HOSTS_FILE" |
 				grep -q "^${addr}$"
 			[ "$?" = 0 ] || return 0
-			
+
 			#Remove the address.
 			remove "$addr"
-					
+
 			#Check if it was the last entry with that name.
 			if ! grep -q -E " ${currname}(\.|$)" "$HOSTS_FILE" ; then
 				#Remove from cache.
 				remove_cache "${currname}"
 			fi
-		
+
 			return 0
 		;;
-		
+
 		#Neighbor is reachable or stale. Must be processed.
 		"REACHABLE"|"STALE"|"PERMANENT")
 			#Decide what to do based on type.
 			case "$type" in
 				#Address already has a stable name. Nothing to be done.
 				0) return 0;;
-				
+
 				#Address is using manufacturer name.
 				1)
 					#Create name for address, not allowing to generate from manufacturer again.
@@ -652,7 +652,7 @@ process() {
 
 					return 0
 				;;
-				
+
 				#Address is new.
 				2)
 					#Create name for address, allowing to generate from manufacturer.
@@ -663,32 +663,32 @@ process() {
 					fi
 				;;
 			esac
-			
+
 			#Get the /64 prefix
 			local prefix=$(addr_prefix64 "$addr")
-	
+
 			#Check address scope and assign proper labels.
 			local suffix=""
 			local scope
 			if [ "$prefix" = 'fe80:0:0:0' ]; then
 				#Is link-local. Append corresponding label.
 				suffix="${lla_label}"
-				
+
 				#Sets scope ID to LLA
 				scope=0
-				
+
 				#Remove the TMP label from the addresses from the same host that have the same IID
 				[ -n "$tmp_label" ] && remove_tmp_label "$addr" "$name"
 			elif [ "$prefix" = "$ula_prefix" ] || [ -z "$urt_label" -a "${addr:0:2}" = "fd" ] ; then
 				#Is ULA. Append corresponding label.
 				suffix="${ula_label}"
-				
+
 				#Sets scope ID to ULA
 				scope=1
 			elif [ "$prefix" = "$wula_prefix" ]; then
 				#Is WAN side ULA. Append corresponding label.
 				suffix="${wula_label}"
-				
+
 				#Sets scope ID to WULA
 				scope=2
 			elif [ "$prefix" = "$gua_prefix" ] || [ -z "$urt_label" ]; then
@@ -700,11 +700,11 @@ process() {
 			else
 				#The address uses a prefix that is not routed to this LAN.
 				suffix="$urt_label"
-				
+
 				#Sets scope ID to unrouted.
 				scope=4
 			fi
-			
+
 			#Check if it needs some secondary label
 			if [ "$scope" -ge 1 ] && [ "$scope" -le 3 ]; then
 				#Managed address ?
@@ -723,26 +723,26 @@ process() {
 				#Names with labels get FQDN
 				hostsname="${name}${suffix}.${DOMAIN}"
 			else
-				#Names without labels 
+				#Names without labels
 				hostsname="${name}"
 			fi
-			
+
 			#Adds entry to hosts file
 			add "$hostsname" "$addr"
-			
+
 			#Checks if this host must have nud perm for all addresses.
 			if grep -q "30 ${name}$" "$CACHE_FILE"; then
 				ip -6 neigh replace "$addr" lladdr "$mac" dev "$LAN_DEV" nud perm
 				logmsg "Changed NUD state to permanent for ${hostsname}."
 			fi
-			
+
 			#Probe other addresses related to this one if not unrouted and the global switch is enabled.
 			if [ "$AUTO_PROBE" = 1 ] && [ "$scope" != 4 ]; then
 				probe_addresses "$name" "$addr" "$mac" "$scope"
 			fi
 		;;
 	esac
-	
+
 	return 0
 }
 
@@ -755,7 +755,7 @@ add_static() {
 	local mac="$5"
 	local perm="$6"
 	local suffix=""
-	
+
 	#Builds the address if needed.
 	local addr
 	if [ -n "$iid" ]; then
@@ -771,20 +771,20 @@ add_static() {
 
 		#ULA
 		1) if [ -n "${ula_label}" ]; then suffix="${ula_label}.${DOMAIN}"; fi;;
-		
+
 		#WULA
 		2) if [ -n "${wula_label}" ]; then suffix="${wula_label}.${DOMAIN}"; fi;;
-		
+
 		#GUA
 		3) if [ -n "${gua_label}" ]; then suffix="${gua_label}.${DOMAIN}"; fi;;
 	esac
-	
+
 	#Writes the entry to the file
 	echo "${addr} ${name}${suffix}" >> "$HOSTS_FILE"
-	
+
 	#Adds a permanent entry in the neighbors table if requested to do so.
 	[ "$perm" -gt 0 ] && ip -6 neigh replace "$addr" lladdr "$mac" dev "$LAN_DEV" nud perm
-	
+
 	return 0
 }
 
@@ -796,7 +796,7 @@ config_host() {
 	config_get name "$1" name
 	config_get mac "$1" mac
 	config_get iface "$1" iface
-	
+
 	#Ignore entry if the minimum required options are missing.
 	if [ -z "$name" ] || [ -z "$mac" ] || [ -z "$iface" ] ; then
 		logmsg "Host entry will be ignored because either the name, the mac or the iface option is missing."
@@ -807,8 +807,8 @@ config_host() {
 	if [ "$iface" != "$LAN_IFACE" ] ; then
 		logmsg "Host entry $name will be ignored because it is connected to interface $iface."
 		return 0;
-	fi 
-	
+	fi
+
 	#Load more options
 	local ip
 	local duid
@@ -818,10 +818,10 @@ config_host() {
 	config_get duid "$1" duid
 	config_get slaac "$1" slaac "0"
 	config_get perm "$1" perm 0
-	
+
 	#Converts user typed MAC to lowercase
 	mac=$(echo "$mac" | awk '{print tolower($0)}')
-	
+
 	#Populate cache with name, depending on supplied options.
 	if [ "$LOAD_STATIC" -gt 0 ] && [ "$slaac" != "0" ]; then
 		#Decides the first digit of type value.
@@ -844,7 +844,7 @@ config_host() {
 	if [ -z "$slaac" ] || [ "$slaac" = "0" ]; then
 		return 0
 	fi
-	
+
 	#Checks if requested to permanent entries to neighbors table
 	if [ "$perm" -gt 0 ]; then
 		#Adds permanent entry to IPv4 neighbors table if and IPv4 address was specified.
@@ -913,7 +913,7 @@ load_neigh() {
 main_service() {
 	#Startup message
 	logmsg "Starting ip6neigh main service v${SVC_VERSION} for physdev $LAN_DEV with domain $DOMAIN"
-	
+
 	#Var initialization
 	reload_time=0
 	reload_pending=1
@@ -932,7 +932,7 @@ main_service() {
 	ula_prefix=$(addr_prefix64 "$ula_address")
 	wula_prefix=$(addr_prefix64 "$wula_address")
 	gua_prefix=$(addr_prefix64 "$gua_address")
-	
+
 	#Separate the first 32-bit from the IID of the router's addresses do match against managed addresses.
 	ula_man_hint=$(addr_iid64 "$ula_address" | cut -d ':' -f1-2)
 	wula_man_hint=$(addr_iid64 "$wula_address" | cut -d ':' -f1-2)
@@ -992,7 +992,7 @@ main_service() {
 	if [ -n "$tmp_label" ]; then tmp_label=".${tmp_label}" ; fi
 	if [ -n "$man_label" ]; then man_label=".${man_label}" ; fi
 	if [ -n "$urt_label" ]; then urt_label=".${urt_label}" ; fi
-		
+
 	#Clears the cache file
 	> "$CACHE_FILE"
 
@@ -1007,7 +1007,7 @@ main_service() {
 		[ "$(($FLUSH & 2))" -gt 0 ] && FLUSH_STALE=1
 		[ "$(($FLUSH & 4))" -gt 0 ] && FLUSH_REACH=1
 		logmsg "Flushing the neighbors table. Flags: PERM=$FLUSH_PERM STALE=$FLUSH_STALE REACH=$FLUSH_REACH"
-		
+
 		#Flushes the corresponding neighbors
 		[ "$FLUSH_PERM" = 1 ] && ip -6 neigh flush dev "$LAN_DEV" nud perm
 		[ "$FLUSH_STALE" = 1 ] && ip -6 neigh flush dev "$LAN_DEV" nud stale
@@ -1036,7 +1036,7 @@ main_service() {
 
 	#Send signal to dnsmasq to reload hosts files.
 	reload_hosts
-	
+
 
 	#Pings "all nodes" multicast address with source addresses from various scopes to speedup discovery.
 	ping6 -q -W 1 -c 3 -s 0 -I "$LAN_DEV" ff02::1 >/dev/null 2>/dev/null
@@ -1050,7 +1050,7 @@ main_service() {
 	LOAD_STALE=1
 	AUTO_PROBE=1
 	load_neigh
-	
+
 	#If some auto-probe is enable, run one more round for detecting the new neighbors after ping6.
 	if [ "$PROBE_EUI64" -gt 0 ] || [ "$PROBE_IID" -gt 0 ]; then
 		logmsg "Syncing the hosts file with the neighbors table... Round #2"
@@ -1058,7 +1058,7 @@ main_service() {
 		AUTO_PROBE=0
 		load_neigh
 	fi
-		
+
 	#Check if there are custom scripts to be runned.
 	if [ -n "$FW_SCRIPT" ]; then
 		for script in $FW_SCRIPT; do
@@ -1071,13 +1071,13 @@ main_service() {
 			fi
 		done
 	fi
-	
+
 	#Check if allowed to setup radvd
 	if [ "$SETUP_RADVD" -gt 0 ] && [ -n "$gua_prefix" ] && which radvd >/dev/null; then
 		#Store the current prefix in the temp file
 		local new_prefix="${gua_prefix}::/64"
 		echo "$new_prefix" > "/tmp/etc/prefix.${LAN_DEV}"
-				
+
 		#Persistent file for storing the old prefix
 		local file='/etc/deprecate.prefix'
 
@@ -1098,12 +1098,12 @@ main_service() {
 			uci set radvd.deprecate.ignore=1
 			uci commit radvd
 		fi
-		
+
 		#Restart radvd
 		/etc/init.d/radvd enabled && /etc/init.d/radvd restart
 	fi
-	
-	 
+
+
 	#Infinite main loop. Keeps monitoring changes in IPv6 neighbor's reachability status and call process() routine.
 	logmsg "Monitoring changes in the neighbor's table..."
 	LOAD_STALE=0
@@ -1115,7 +1115,7 @@ main_service() {
 			process $line
 			reload_hosts
 		done
-	
+
 	logmsg "Terminating the main service"
 	return 0
 }
@@ -1132,35 +1132,35 @@ snooping_service() {
 
 	local line
 	local addr
-	
+
 	#If the LAN iface is bridged, disable IGMP snooping on the bridge.
 	local mcsnoop="/sys/class/net/${LAN_DEV}/bridge/multicast_snooping"
 	[ -f "$mcsnoop" ] && echo 0 > "$mcsnoop"
-	
+
 	#Enables the 'allmulticast' flag on the interface
 	ip link set "$LAN_DEV" allmulticast on
-	
+
 	#Infinite loop. Keeps listening to DAD NS packets and pings the captured addresses.
 	tcpdump -q -l -n -p -i "$LAN_DEV" 'src :: && icmp6 && ip6[40] == 135' 2>/dev/null |
 		while IFS= read -r line
 		do
 			#Get the address from the line
 			addr=$(echo $line | awk '{print substr($11,1,length($11)-1);}')
-			
+
 			#Ignore blank address
 			[ -n "$addr" ] || continue
-			
+
 			#Check if the address already exists in any hosts file
 			if [ "$PROBE_HOST" != 1 ] && grep -q "^$addr[ ,"$'\t'"]" /tmp/hosts/* ; then
 				continue
 			fi
-				
+
 			#Ping the address to trigger a NS message from the router
 			sleep 1
 			logmsg "Probing $addr after snooping a DAD NS packet from it"
 			ping6 -q -W 1 -c 1 -s 0 -I "$LAN_DEV" "$addr" >/dev/null 2>/dev/null
 		done
-	
+
 	logmsg "Terminating the snooping service"
 	return 0
 }

@@ -27,7 +27,7 @@ errormsg() {
 
 start() {
 	pgrep -f "$SERVICE_NAME" >/dev/null && return 0
-	
+
 	[ -f "$SERVICE_SCRIPT" ] || errormsg "The main script file $SERVICE_SCRIPT is missing."
 
 	local snoop=$(uci get ip6neigh.config.dad_snoop 2>/dev/null)
@@ -46,7 +46,7 @@ start() {
 stop() {
 	local ppid
 	local cpid
-	
+
 	pgrep -f "$SERVICE_NAME" |
 		while IFS= read -r ppid
 		do
