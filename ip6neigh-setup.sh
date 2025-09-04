@@ -14,7 +14,7 @@
 #
 #	by André Lange	Dec 2016
 
-readonly VERSION='1.7.0'
+readonly VERSION='2.0.0'
 
 readonly BIN_DIR="/usr/bin/"
 readonly SBIN_DIR="/usr/sbin/"
@@ -28,7 +28,7 @@ readonly CACHE_FILE="/tmp/ip6neigh.cache"
 
 readonly SERVICE_NAME="ip6neigh-svc.sh"
 
-readonly REPO="https://raw.githubusercontent.com/AndreBL/ip6neigh/master/"
+readonly REPO="https://raw.githubusercontent.com/Fail-Safe/ip6neigh/"
 
 #Installation list
 readonly inst_list="
@@ -113,13 +113,13 @@ install_line() {
 			mkdir -p "$dirname"
 			[ -d "$dirname" ] || errmsg "Could not create directory ${dirname}"
 		;;
-		
+
 		#Download file
 		"file")
 			local destname="$2"
 			local sourcename="$3"
 			local execflag="$4"
-			
+
 			echo "Downloading ${sourcename}"
 			download_file "$destname" "$sourcename"
 			if [ "$execflag" = "x" ]; then
@@ -141,7 +141,7 @@ uninstall_line() {
 				rmdir "$dirname" || flag_error
 			fi
 		;;
-		
+
 		#Remove directory tree
 		"tree")
 			local dirname="$2"
@@ -150,7 +150,7 @@ uninstall_line() {
 				rm -rf "$dirname" || flag_error
 			fi
 		;;
-		
+
 		#Remove files
 		"file")
 			shift
@@ -170,10 +170,10 @@ uninstall_line() {
 install() {
 	#Create temp dir
 	mkdir -p "$TEMP_DIR" || errormsg "Failed to create directory $TEMP_DIR"
-	
+
 	#Check curl
 	which curl >/dev/null || errormsg "ip6neigh requires package 'curl' to be installed before running this setup script. Please install 'curl' with:\n\nopkg update\nopkg install curl"
-	
+
 	#Check if the install list version match the repository
 	echo "Checking installer version..."
 	download_file "${TEMP_DIR}VERSION" "setup/VERSION"
@@ -181,7 +181,7 @@ install() {
 	local rem_version=$(cut -d '.' -f1-2 "${TEMP_DIR}VERSION")
 	[ "$loc_version" = "$rem_version" ] || errormsg "This installation script is out of date. Please visit https://github.com/AndreBL/ip6neigh and check if a new version of the installer is available for download."
 	echo "The installer script is up to date."
-	
+
 	#Check operating system
 	local OS
 	[ -f '/etc/openwrt_release' ] && OS='OpenWrt'
@@ -195,26 +195,26 @@ install() {
 				errormsg "ip6neigh requires package 'ip-full'. Please install 'ip-full' with:\n\nopkg update\nopkg install ip-full"
 			fi
 		;;
-		
+
 		'LEDE')
 			#Warning message
 			echo -e "\nWARNING: ip6neigh requires package 'ip-full' version 4.4.0-9 or above to run on LEDE. Using an older build will not work due to an issue with the 'ip monitor' command. Please visit https://github.com/AndreBL/ip6neigh for more info about installing or upgrading this package."
-			
+
 			#Check ip-full package
 			ip 2>&1 >/dev/null | grep -q 'monitor'
 			[ "$?" != 0 ] && errormsg "Missing package: ip-full"
 		;;
-		
+
 		*)
 			#Warning message
 			echo -e "\nWARNING: Operating system not supported. The installation will proceed anyway."
 		;;
 	esac
-	
+
 	#Check if already installed
 	[ -d "$LIB_DIR" ] && echo -e "\n The existing installation of ip6neigh will be overwritten."
 	check_running
-	
+
 	#Process install list
 	echo -e
 	local line
@@ -224,7 +224,7 @@ install() {
 		IFS=' '
 		[ -n "$line" ] && install_line $line
 	done
-	
+
 	#Check if UCI config file exists.
 	if [ -f "$CONFIG_FILE" ]; then
 		local confdest="${CONFIG_FILE}.example"
@@ -233,10 +233,10 @@ install() {
 	else
 		mv /tmp/ip6neigh/config "$CONFIG_FILE" || "Failed to move the configuration file"
 	fi
-	
+
 	#Remove temporary directory
 	uninstall_line tree "$TEMP_DIR"
-	
+
 	#Successful installation
 	echo -e "$SUCCESS_MSG"
 }
@@ -245,12 +245,12 @@ install() {
 uninstall() {
 	[ -d "$LIB_DIR" ] || [ -d "$SHARE_DIR" ] || errormsg "ip6neigh is not installed on this system."
 	check_running
-	
+
 	#Remove hosts and cache files
 	echo -e
 	uninstall_line file "$HOSTS_FILE"
 	uninstall_line file "$CACHE_FILE"
-	
+
 	#Process uninstall list
 	IFS=$'\n'
 	for line in $uninst_list;
@@ -258,12 +258,12 @@ uninstall() {
 		IFS=' '
 		[ -n "$line" ] && uninstall_line $line
 	done
-	
+
 	#Remove temporary directory
 	uninstall_line tree "$TEMP_DIR"
-	
+
 	[ -f "$CONFIG_FILE" ] && echo -e "\nThe config file $CONFIG_FILE was kept in place for future use. Please remove this file manually if you will not need it anymore."
-	
+
 	#Check if any error ocurred while removing files
 	if [ -z "$error" ]; then
 		echo -e "\nFinished uninstalling ip6neigh."
@@ -291,4 +291,3 @@ case "$1" in
 	"remove") uninstall;;
 	*) display_help "$0"
 esac
-

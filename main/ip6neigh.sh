@@ -137,10 +137,10 @@ list_hosts() {
 
 list_hosts_iface() {
 	check_files
-	
+
 	#Get the line number that divides the two sections of the hosts file
 	local ln=$(grep -n '^#Discovered' "$HOSTS_FILE" | cut -d ':' -f1)
-	
+
 	case "$1" in
 		#All hosts without comments or blank lines
 		all)
@@ -179,7 +179,7 @@ list_hosts_iface() {
 
 				#Prints the temp file.
 				sort /tmp/ip6neigh.lst
-				rm /tmp/ip6neigh.lst			
+				rm /tmp/ip6neigh.lst
 		;;
 		#Addresses from a specific host
 		host|hst)
@@ -205,10 +205,10 @@ list_hosts_iface() {
 #Format FQDN for grep.
 format_fqdn() {
 	load_config
-	
+
 	#Check FQDN
 	local ffqdn="$2"
-	
+
 	case "$ffqdn" in
 		#Ends with .lan ?
 		?*".$DOMAIN")
@@ -227,37 +227,37 @@ format_fqdn() {
 			ffqdn="${2}.${DOMAIN}"
 		;;
 	esac
-	
+
 	#Escape dots
 	ffqdn=$(echo "$ffqdn" | sed 's/\./\\\./g')
-	
+
 	#Returns the formatted FQDN.
 	eval "$1='$ffqdn'"
 }
 
 #Displays the addresses for the supplied name
 show_address() {
-        load_config
-        check_running
+		load_config
+		check_running
 
-        for LAN_IFACE in $LAN_IFACES ; do
-                HOSTS_FILE="/tmp/hosts/ip6neigh.$LAN_IFACE"
-                CACHE_FILE="/tmp/ip6neigh.$LAN_IFACE.cache"
+		for LAN_IFACE in $LAN_IFACES ; do
+				HOSTS_FILE="/tmp/hosts/ip6neigh.$LAN_IFACE"
+				CACHE_FILE="/tmp/ip6neigh.$LAN_IFACE.cache"
 
-                network_get_physdev LAN_DEV "$LAN_IFACE"
-                show_address_iface "$1" "$2"
-        done
+				network_get_physdev LAN_DEV "$LAN_IFACE"
+				show_address_iface "$1" "$2"
+		done
 }
 
 show_address_iface() {
 	check_files
-	
+
 	#Check FQDN
 	local name
 	format_fqdn name "$1"
-	
+
 	case "$2" in
-		#Any number of addresses 
+		#Any number of addresses
 		'')
 			grep -i " ${name}$" "$HOSTS_FILE" |
 				cut -d ' ' -f1
@@ -274,21 +274,21 @@ show_address_iface() {
 
 #Displays the name for the IPv6 or MAC address
 show_name() {
-        load_config
-        check_running
+		load_config
+		check_running
 
-        for LAN_IFACE in $LAN_IFACES ; do
-                HOSTS_FILE="/tmp/hosts/ip6neigh.$LAN_IFACE"
-                CACHE_FILE="/tmp/ip6neigh.$LAN_IFACE.cache"
+		for LAN_IFACE in $LAN_IFACES ; do
+				HOSTS_FILE="/tmp/hosts/ip6neigh.$LAN_IFACE"
+				CACHE_FILE="/tmp/ip6neigh.$LAN_IFACE.cache"
 
-                network_get_physdev LAN_DEV "$LAN_IFACE"
-                show_name_iface "$1"
-        done
+				network_get_physdev LAN_DEV "$LAN_IFACE"
+				show_name_iface "$1"
+		done
 }
 
 show_name_iface() {
 	check_files
-	
+
 	#Compress the address
 	local addr=$(reformat_addr "$1")
 
@@ -298,22 +298,22 @@ show_name_iface() {
 
 #Display the MAC address for a simple name, FQDN or IPv6 address.
 show_mac() {
-        load_config
-        check_running
+		load_config
+		check_running
 
-        for LAN_IFACE in $LAN_IFACES ; do
-                HOSTS_FILE="/tmp/hosts/ip6neigh.$LAN_IFACE"
-                CACHE_FILE="/tmp/ip6neigh.$LAN_IFACE.cache"
+		for LAN_IFACE in $LAN_IFACES ; do
+				HOSTS_FILE="/tmp/hosts/ip6neigh.$LAN_IFACE"
+				CACHE_FILE="/tmp/ip6neigh.$LAN_IFACE.cache"
 
-                network_get_physdev LAN_DEV "$LAN_IFACE"
-                show_mac_iface "$1"
-        done
+				network_get_physdev LAN_DEV "$LAN_IFACE"
+				show_mac_iface "$1"
+		done
 }
 
 show_mac_iface() {
 	check_files
 	local name
-	
+
 	#Check if it's address or name.
 	case "$1" in
 		*':'*)
@@ -332,9 +332,9 @@ show_mac_iface() {
 			name=$(echo "$1" | cut -d '.' -f1)
 		;;
 	esac
-	
+
 	[ -n "$name" ] || exit 3
-	
+
 	#Get the MAC address from the cache file.
 	grep -m 1 -i " ${name}$" "$CACHE_FILE" |
 		cut -d ' ' -f1
@@ -342,21 +342,21 @@ show_mac_iface() {
 
 #Resolves name to address or address to name.
 resolve_cmd() {
-        load_config
-        check_running
+		load_config
+		check_running
 
-        for LAN_IFACE in $LAN_IFACES ; do
-                HOSTS_FILE="/tmp/hosts/ip6neigh.$LAN_IFACE"
-                CACHE_FILE="/tmp/ip6neigh.$LAN_IFACE.cache"
+		for LAN_IFACE in $LAN_IFACES ; do
+				HOSTS_FILE="/tmp/hosts/ip6neigh.$LAN_IFACE"
+				CACHE_FILE="/tmp/ip6neigh.$LAN_IFACE.cache"
 
-                network_get_physdev LAN_DEV "$LAN_IFACE"
-                resolve_cmd_iface "$1" "$2"
-        done
+				network_get_physdev LAN_DEV "$LAN_IFACE"
+				resolve_cmd_iface "$1" "$2"
+		done
 }
 
 resolve_cmd_iface() {
 	check_files
-	
+
 	#Check if it's address or name.
 	case "$1" in
 		*':'*)
@@ -380,27 +380,27 @@ resolve_cmd_iface() {
 
 #Displays the simple name (no FQDN) for the address or all addresses for the simple name.
 whois_this() {
-        load_config
-        check_running
+		load_config
+		check_running
 
-        for LAN_IFACE in $LAN_IFACES ; do
-                HOSTS_FILE="/tmp/hosts/ip6neigh.$LAN_IFACE"
-                CACHE_FILE="/tmp/ip6neigh.$LAN_IFACE.cache"
+		for LAN_IFACE in $LAN_IFACES ; do
+				HOSTS_FILE="/tmp/hosts/ip6neigh.$LAN_IFACE"
+				CACHE_FILE="/tmp/ip6neigh.$LAN_IFACE.cache"
 
-                network_get_physdev LAN_DEV "$LAN_IFACE"
-                whois_this_iface "$1"
-        done
+				network_get_physdev LAN_DEV "$LAN_IFACE"
+				whois_this_iface "$1"
+		done
 }
 
 whois_this_iface() {
 	check_files
-	
+
 	local host
 	local names
 	local mac
 	local manuf
 	local reg
-	
+
 	#Check if it's an address.
 	case "$1" in
 		#Check if it's a MAC address.
@@ -421,13 +421,13 @@ whois_this_iface() {
 				cut -d '.' -f1
 			)
 			[ -n "$host" ] || exit 3
-			
+
 			mac=$(
 				grep -m 1 -i " $host" "$CACHE_FILE" |
 				cut -d ' ' -f1
 			)
 		;;
-		#Host		
+		#Host
 		*)
 			host=$(echo "$1" | cut -d '.' -f1)
 			reg=$(grep -m 1 -i " ${host}$" "$CACHE_FILE")
@@ -436,20 +436,20 @@ whois_this_iface() {
 			host=$(echo "$reg" | cut -d ' ' -f3)
 		;;
 	esac
-	
+
 	#Get the OUI info.
 	if [ -n "$mac" ]; then
 		oui_name manuf "$mac"
 	fi
-	
+
 	#Exit if no info was found.
 	[ -z "$host" ] && [ -z "$manuf" ] && exit 3
-	
+
 	#Displays the available info.
 	[ -n "$host" ] && echo "Hostname: $host"
 	echo "MAC: $mac"
 	[ -n "$manuf" ] && echo "OUI: $manuf"
-	
+
 	#Displays a list of names that belong to this host.
 	names=$(
 		grep -i -E " ${host}(\.|$)" "$HOSTS_FILE" |
@@ -458,7 +458,7 @@ whois_this_iface() {
 		uniq
 	)
 	[ -n "$names" ] && echo 'FQDN:' $names
-	
+
 	return 0
 }
 
@@ -466,7 +466,7 @@ whois_this_iface() {
 oui_download() {
 	echo "Downloading Nmap MAC prefixes..."
 	oui_url='https://standards-oui.ieee.org/oui/oui.txt'
-    curl -# -S -f -k -o '/tmp/oui-raw.txt' $oui_url || exit 2
+	curl -# -S -f -k -o '/tmp/oui-raw.txt' $oui_url || exit 2
 
 	echo -e "\nApplying filters..."
 
@@ -495,32 +495,32 @@ oui_name() {
 	#Get MAC and separates OUI part.
 	local mac=$(echo "$2" | tr -d ':')
 	local oui="${mac:0:6}"
-	
+
 	#Check if this is the broadcast MAC
 	if [ "$mac" = 'ffffffffffff' ]; then
 		eval "$1='Broadcast address'"
 		return 0
 	fi
-	
+
 	#Check if the MAC is a multicast address.
 	if [ "$((0x${oui:0:2} & 0x01))" != 0 ]; then
 		eval "$1='Multicast address'"
 		return 0
 	fi
-	
+
 	#Check if the MAC is locally administered.
 	if [ "$((0x${oui:0:2} & 0x02))" != 0 ]; then
 		eval "$1='Locally administered'"
 		return 0
 	fi
-	
+
 	#Fails here if OUI file does not exist.
 	[ -f "$OUI_FILE" ] || return 1
 
 	#Searches for the OUI in the database.
 	local reg=$(gunzip -c "$OUI_FILE" | grep -i -m 1 "^$oui")
 	local oname="${reg:6}"
-	
+
 	#Check if found.
 	if [ -n "$oname" ]; then
 		#Returns the manufacturer name and success code.
@@ -550,10 +550,10 @@ oui_cmd() {
 	case "$1" in
 		#Download OUI database
 		downl*) oui_download;;
-		
+
 		#Display manufacturer name
 		??:??:??:??:??:??) oui_manufacturer "$1";;
-		
+
 		#Invalid parameter
 		*) display_help;;
 	esac
@@ -562,25 +562,25 @@ oui_cmd() {
 #Show log contents
 log_read() {
 	load_config
-	
+
 	case "$LOG" in
 		#LOG disabled
 		0)
 			>&2 echo "Logging is disabled."
 			exit 2
 		;;
-		
+
 		#Syslog
 		1)
 			logread |
 				grep 'ip6neigh: ' |
 				grep -i -E "$1"
 		;;
-		
+
 		#File
 		*) [ -f "$LOG" ] &&	grep -i -E "$1" "$LOG";;
-	esac 
-	
+	esac
+
 	return 0
 }
 
